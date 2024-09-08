@@ -227,7 +227,7 @@
     }
 
     function combineElements(element1, element2) {
-        const prompt = `What item from the game Growtopia would you get when splicing ${element1} and ${element2}? If the recipe doesnt exist, give an existing item from the game that would possibly be gotten by splicing those two items. Remember, only answer with the result and dont give any explanations or comments. Make sure that the result is an item that actually EXISTS in Growtopia. You can refer to the game's wiki. So, the answer you give has to be an item that is implemented in the game Growtopia and can be found on the game's wikia. Here's the link to the wiki: https://growtopia.fandom.com/wiki/Growtopia_Wiki `;
+        const prompt = `What item from the game Growtopia would you get when splicing ${element1} and ${element2}? If the recipe doesnt exist, give an existing item from the game that would possibly be gotten by splicing those two items. Remember, only answer with the result and dont give any explanations or comments. Make sure that the result is an item that actually EXISTS in Growtopia. You can refer to the game's wiki. So, the answer you give has to be an item that is implemented in the game Growtopia and can be found on the game's wikia. Here's the link to the wiki: https://growtopia.fandom.com/wiki/Growtopia_Wiki. So, if the item doesnt exist on the wiki, choose another item that actually has a page on the wiki.`;
 
         return fetch(apiEndpoint, {
             method: 'POST',
