@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Craftopia</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f4f8;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            text-align: center;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            max-width: 600px;
+            width: 100%;
+        }
+        h1 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+        .elements {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 5px;
+            margin-bottom: 20px;
+            max-height: 500px; /* Increased height */
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+        }
+        .element-btn {
+            padding: 8px 16px;
+            background-color: #fff;
+            color: #000;
+            border: 1px solid #a0a0a0;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s, box-shadow 0.3s, transform 0.3s, opacity 1s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .element-btn:hover {
+            background-color: #f1f1f1;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            transform: scale(1.2);
+        }
+        .element-btn:active {
+            background-color: #e0e0e0;
+        }
+        .element-btn.fade-out {
+            opacity: 0;
+        }
+        input {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            margin: 5px;
+            width: calc(50% - 22px);
+            font-size: 16px;
+            text-align: center;
+        }
+        .search-bar {
+            margin: 10px 0;
+            padding: 10px;
+            width: 100%;
+            border-radius: 8px;
+            border: 3px transparent #add8e6;
+            font-size: 16px;
+            outline-color: #add8e6;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            cursor: pointer;
+            font-size: 18px;
+            margin: 5px;
+            transition: background-color 0.3s, box-shadow 0.3s;
+        }
+        #combine-btn {
+            background-color: #28a745;
+        }
+        #combine-btn:hover {
+            background-color: #218838;
+        }
+        #combine-btn:active {
+            background-color: #1e7e34;
+        }
+        #reset-btn {
+            background-color: #dc3545;
+        }
+        #reset-btn:hover {
+            background-color: #c82333;
+        }
+        #reset-btn:active {
+            background-color: #bd2130;
+        }
+        h2 {
+            margin-top: 20px;
+            color: #333;
+        }
+        #combine-btn:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        @keyframes sway {
+            0% { transform: rotate(0deg); }
+            25% { transform: rotate(-5deg); }
+            50% { transform: rotate(5deg); }
+            75% { transform: rotate(-5deg); }
+            100% { transform: rotate(0deg); }
+        }
+
+        .sway-animation {
+            animation: sway 0.5s ease-in-out;
+        }
+
+        .add-element-section {
+            margin-top: 15px;
+        }
+        .add-element-section input {
+            width: calc(100% - 22px);
+            margin-bottom: 10px;
+        }
+        #add-element-btn {
+            background-color: #ff6600; /* Orange background */
+            color: #fff; /* White text */
+        }
+
+        #add-element-btn:hover {
+            background-color: #e65c00; /* Darker orange on hover */
+        }
+
+        #add-element-btn:active {
+            background-color: #cc5200; /* Even darker orange on active */
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Craftopia</h1>
+        
+        <audio id="effect-sound" src="effect.mp3"></audio>
+        <audio id="choose-sound" src="choose.mp3"></audio>
+        <audio id="vanish-sound" src="vanish.mp3"></audio> <!-- Added vanish sound -->
+
+        <div class="elements" id="elements-list">
+            <!-- Element buttons will be generated here -->
+        </div>
+
+        <input type="text" id="search-bar" class="search-bar" placeholder="Search elements...">
+
+        <div>
+            <input type="text" id="element1" placeholder="Element 1" readonly>
+            <input type="text" id="element2" placeholder="Element 2" readonly>
+        </div>
+        
+        <button id="combine-btn">Combine Elements</button>
+        <button id="reset-btn">Reset Elements</button>
+
+        <h2>Result: <span id="new-element"></span></h2>
+        <h5>Remove any unwanted/duplicate elements by right clicking!</h5>
+
+        <!-- New section for adding elements -->
+        <div class="add-element-section">
+            <input type="text" id="new-element-input" placeholder="Enter new element">
+            <button id="add-element-btn">Add Element</button>
+        </div>
+    </div>
+
+    <script>
+    const apiKey = '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';
+    const apiEndpoint = 'https://api.groq.com/openai/v1/chat/completions';
+
+    // Default elements
+    const defaultElements = ['Lava 🔥', 'Cave Bg 🟤', 'Dirt 🟫', 'Grass 🌿'];
+
+    // Global variables
+    let availableElements = loadElementsFromCookies() || [...defaultElements];
+    let selectedElement1 = null;
+    let selectedElement2 = null;
+
+    function attachElementListeners() {
+        const elementButtons = document.querySelectorAll('.element-btn');
+
+        elementButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                if (!selectedElement1) {
+                    selectedElement1 = this.textContent;
+                    document.getElementById('element1').value = selectedElement1;
+                } else if (!selectedElement2) {
+                    selectedElement2 = this.textContent;
+                    document.getElementById('element2').value = selectedElement2;
+                }
+
+                // Play the choose sound
+                const chooseAudio = document.getElementById('choose-sound');
+                chooseAudio.play().catch(function(error) {
+                    console.error('Error playing choose sound:', error);
+                });
+            });
+
+            btn.addEventListener('contextmenu', function(event) {
+                event.preventDefault(); // Prevent default context menu
+                const elementText = this.textContent;
+                if (!defaultElements.includes(elementText)) {
+                    removeElement(this);
+                } else {
+                    alert('Cannot remove default element!');
+                }
+            });
+        });
+    }
+
+    function combineElements(element1, element2) {
+        const prompt = `What item from the game Growtopia do you get when combinimg {element1} and {element2}?`;
+
+        return fetch(apiEndpoint, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                model: 'llama-3.1-70b-versatile',
+                messages: [{ role: 'user', content: prompt }],
+                max_tokens: 50
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            const newElement = data.choices[0].message.content.trim();
+            return newElement;
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            return "Error: Unable to retrieve response.";
+        });
+    }
+
+    document.getElementById('combine-btn').addEventListener('click', async function() {
+        const element1 = document.getElementById('element1').value;
+        const element2 = document.getElementById('element2').value;
+
+        if (element1 && element2) {
+            const combineButton = document.getElementById('combine-btn');
+            combineButton.disabled = true;
+
+            const newElement = await combineElements(element1, element2);
+
+            if (newElement) {
+                const newElementName = getElementName(newElement);
+
+                // Check for duplicates based on the name without emojis
+                const elementExists = availableElements.some(el => getElementName(el) === newElementName);
+
+                if (!elementExists) {
+                    availableElements.push(newElement);
+                    saveElementsToCookies(availableElements);  // Save new element to cookies
+                    renderElementButtons();
+
+                    // Add sway animation to the newly added button
+                    const newElementBtn = document.querySelector(`.element-btn:last-child`);
+                    if (newElementBtn) {
+                        newElementBtn.classList.add('sway-animation');
+                        setTimeout(() => {
+                            newElementBtn.classList.remove('sway-animation');
+                        }, 500);
+                    }
+                } else {
+                    console.log('Duplicate element detected, not adding:', newElement);
+                }
+
+                // Play the effect sound
+                const effectAudio = document.getElementById('effect-sound');
+                effectAudio.play().catch(function(error) {
+                    console.error('Error playing effect sound:', error);
+                });
+
+                document.getElementById('new-element').textContent = newElement;
+                selectedElement1 = null;
+                selectedElement2 = null;
+                document.getElementById('element1').value = '';
+                document.getElementById('element2').value = '';
+
+                combineButton.disabled = false;
+            }
+        } else {
+            alert('Please select two elements to combine.');
+        }
+    });
+
+    document.getElementById('reset-btn').addEventListener('click', function() {
+        availableElements = [...defaultElements];
+        saveElementsToCookies(availableElements);  // Reset to default and save to cookies
+        renderElementButtons();
+    });
+
+    // Add event listener to the "Add Element" button
+    document.getElementById('add-element-btn').addEventListener('click', function() {
+        const newElement = document.getElementById('new-element-input').value.trim();
+        
+        if (newElement && !availableElements.includes(newElement)) {
+            availableElements.push(newElement);
+            saveElementsToCookies(availableElements);  // Save new element to cookies
+            renderElementButtons();
+            document.getElementById('new-element-input').value = '';  // Clear input field
+        } else {
+            alert('Please enter a unique element name.');
+        }
+    });
+
+    // Search bar filtering functionality
+    document.getElementById('search-bar').addEventListener('input', function() {
+        const searchQuery = this.value.toLowerCase();
+        const elementButtons = document.querySelectorAll('.element-btn');
+
+        elementButtons.forEach(button => {
+            const elementText = button.textContent.toLowerCase();
+            if (elementText.includes(searchQuery)) {
+                button.style.display = '';
+            } else {
+                button.style.display = 'none';
+            }
+        });
+    });
+
+    function renderElementButtons() {
+        const elementsList = document.getElementById('elements-list');
+        elementsList.innerHTML = '';
+
+        availableElements.forEach(el => {
+            const btn = document.createElement('button');
+            btn.classList.add('element-btn');
+            btn.textContent = el;
+            elementsList.appendChild(btn);
+        });
+
+        attachElementListeners();
+    }
+
+    function removeElement(button) {
+        // Play the vanish sound
+        const vanishAudio = document.getElementById('vanish-sound');
+        vanishAudio.play().catch(function(error) {
+            console.error('Error playing vanish sound:', error);
+        });
+
+        const elementText = button.textContent;
+        availableElements = availableElements.filter(el => el !== elementText); // Remove from data
+        saveElementsToCookies(availableElements);  // Save changes to cookies
+        
+        button.classList.add('fade-out');
+        setTimeout(() => {
+            button.remove();
+        }, 1000); // Match the fade-out duration
+    }
+
+    // Cookie management functions
+    function saveElementsToCookies(elements) {
+        const cookieValue = encodeURIComponent(JSON.stringify(elements));
+        document.cookie = `elements=${cookieValue};path=/;max-age=${60 * 60 * 24 * 365}`; // 1 year expiration
+    }
+
+    function loadElementsFromCookies() {
+        const name = "elements=";
+        const decodedCookie = decodeURIComponent(document.cookie);
+        const cookieArr = decodedCookie.split(';');
+
+        for (let i = 0; i < cookieArr.length; i++) {
+            let cookie = cookieArr[i].trim();
+            if (cookie.indexOf(name) === 0) {
+                return JSON.parse(cookie.substring(name.length));
+            }
+        }
+        return null;
+    }
+
+    function getElementName(element) {
+        return element.replace(/[^\w\s]/g, ''); // Remove emojis and other non-word characters
+    }
+
+    // Initial render of element buttons
+    renderElementButtons();
+    </script>
+</body>
+</html>
