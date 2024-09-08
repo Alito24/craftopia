@@ -187,7 +187,7 @@
     const apiEndpoint = 'https://api.groq.com/openai/v1/chat/completions';
 
     // Default elements
-    const defaultElements = ['Lava 🔥', 'Cave Bg 🟤', 'Dirt 🟫', 'Grass 🌿'];
+    const defaultElements = ['Lava 🔥', 'Cave Background 🟤', 'Dirt 🟫', 'Grass 🌿'];
 
     // Global variables
     let availableElements = loadElementsFromCookies() || [...defaultElements];
@@ -227,7 +227,7 @@
     }
 
     function combineElements(element1, element2) {
-        const prompt = `What item from the game Growtopia would you get when splicing ${element1} and ${element2}? If the recipe doesnt exist, give an existing item from the game that would possibly be gotten by splicing those two items`;
+        const prompt = `What item from the game Growtopia would you get when splicing ${element1} and ${element2}? If the recipe doesnt exist, give an existing item from the game that would possibly be gotten by splicing those two items. Remember, only answer with the result and dont give any explanations or comments`;
 
         return fetch(apiEndpoint, {
             method: 'POST',
